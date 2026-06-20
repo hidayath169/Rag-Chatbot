@@ -1,0 +1,6 @@
+John Doe
+Software Engineer
+
+Skills: Python, JavaScript, React, Node.js, AWS, Docker
+Experience: 5 years at Google, 3 years at Meta
+Education: BS Computer Science, Stanford University

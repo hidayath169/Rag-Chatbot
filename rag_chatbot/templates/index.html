@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered Resume Chatbot — Upload bulk resumes and query them with natural language using RAG technology.">
+    <title>ResumeAI — RAG Resume Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ── Sidebar ────────────────────────────────────────── -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                            <line x1="16" y1="13" x2="8" y2="13"/>
+                            <line x1="16" y1="17" x2="8" y2="17"/>
+                            <polyline points="10 9 9 9 8 9"/>
+                        </svg>
+                    </div>
+                    <h1>ResumeAI</h1>
+                </div>
+                <button class="btn-icon" id="settingsBtn" title="Settings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-section">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="upload-text">Drop resumes here</p>
+                    <p class="upload-subtext">PDF, DOCX, TXT — up to 50MB</p>
+                    <input type="file" id="fileInput" multiple accept=".pdf,.docx,.doc,.txt" hidden>
+                    <button class="btn-browse" id="browseBtn">Browse Files</button>
+                </div>
+                <div class="upload-progress" id="uploadProgress" style="display:none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Uploading...</p>
+                </div>
+            </div>
+
+            <!-- Document List -->
+            <div class="documents-section">
+                <div class="section-header">
+                    <h2>Uploaded Resumes</h2>
+                    <span class="badge" id="docCount">0</span>
+                </div>
+                <div class="document-list" id="documentList">
+                    <div class="empty-state" id="emptyState">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                            <polyline points="13 2 13 9 20 9"/>
+                        </svg>
+                        <p>No resumes uploaded yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-bar" id="statsBar">
+                <div class="stat">
+                    <span class="stat-value" id="statDocs">0</span>
+                    <span class="stat-label">Documents</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-value" id="statChunks">0</span>
+                    <span class="stat-label">Chunks</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ── Mobile sidebar toggle ──────────────────────── -->
+        <button class="sidebar-toggle" id="sidebarToggle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+
+        <!-- ── Main Chat Area ─────────────────────────────── -->
+        <main class="chat-area">
+            <div class="chat-header">
+                <div class="chat-title">
+                    <h2>Resume Assistant</h2>
+                    <span class="status-dot"></span>
+                    <span class="status-text">Ready</span>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome message -->
+                <div class="message bot-message welcome-message">
+                    <div class="message-avatar">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2a4 4 0 0 1 4 4v2a4 4 0 0 1-8 0V6a4 4 0 0 1 4-4z"/>
+                            <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                        </svg>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <h3>👋 Welcome to ResumeAI!</h3>
+                            <p>I'm your intelligent resume analysis assistant. Here's how to get started:</p>
+                            <ol>
+                                <li><strong>Set your API key</strong> — Click the ⚙️ icon in the sidebar</li>
+                                <li><strong>Upload resumes</strong> — Drag & drop PDF/DOCX files into the sidebar</li>
+                                <li><strong>Ask questions</strong> — Query across all uploaded resumes</li>
+                            </ol>
+                            <p>Try questions like:</p>
+                            <div class="suggestion-chips">
+                                <button class="chip" onclick="sendSuggestion(this)">Who has Python experience?</button>
+                                <button class="chip" onclick="sendSuggestion(this)">Summarize all candidates</button>
+                                <button class="chip" onclick="sendSuggestion(this)">Compare the skill sets</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-area">
+                <div class="input-wrapper">
+                    <textarea
+                        id="chatInput"
+                        placeholder="Ask a question about the uploaded resumes..."
+                        rows="1"
+                        maxlength="4000"
+                    ></textarea>
+                    <button class="btn-send" id="sendBtn" title="Send message">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"/>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                        </svg>
+                    </button>
+                </div>
+                <p class="input-hint">Press Enter to send, Shift+Enter for new line</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- ── Settings Modal ─────────────────────────────────── -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="btn-icon modal-close" id="closeSettings">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="apiKeyInput">Google API Key</label>
+                    <p class="form-hint">Get a free key from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a></p>
+                    <div class="input-group">
+                        <input type="password" id="apiKeyInput" placeholder="Enter your Google API key...">
+                        <button class="btn-toggle-vis" id="toggleKeyVis" title="Show/hide key">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button class="btn-primary" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Notification Toast ─────────────────────────────── -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
